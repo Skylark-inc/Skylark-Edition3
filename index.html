@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f4c542">
+  <title>Skylark — Edition 3</title>
+
+  <link rel="icon" href="web-icon">
+  <link rel="apple-touch-icon" href="web-icon">
+
+  <style>
+    :root {
+      color-scheme: light dark;
+      --page: #fff9e8;
+      --surface: rgba(255, 255, 255, 0.78);
+      --surface-solid: #fffefa;
+      --text: #211d12;
+      --muted: #71684f;
+      --accent: #f4c542;
+      --accent-strong: #e6ad00;
+      --accent-text: #241c06;
+      --border: rgba(71, 55, 10, 0.12);
+      --shadow: 0 18px 55px rgba(91, 68, 0, 0.12);
+      --link: #725100;
+      --danger: #a83225;
+      --danger-bg: #fff0ec;
+      --notice-bg: #fff3c6;
+      --notice-border: #e9bc35;
+      --backdrop: rgba(24, 20, 10, 0.56);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --page: #17150f;
+        --surface: rgba(39, 36, 26, 0.82);
+        --surface-solid: #27241a;
+        --text: #fff9e9;
+        --muted: #c0b797;
+        --accent: #f2c23e;
+        --accent-strong: #ffd454;
+        --accent-text: #211a06;
+        --border: rgba(255, 239, 190, 0.13);
+        --shadow: 0 18px 55px rgba(0, 0, 0, 0.3);
+        --link: #ffdc70;
+        --danger: #ff9b8f;
+        --danger-bg: #3b211c;
+        --notice-bg: #3b3218;
+        --notice-border: #99781c;
+        --backdrop: rgba(0, 0, 0, 0.7);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--page);
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 50% -15%, rgba(244, 197, 66, 0.25), transparent 55%),
+        var(--page);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    a {
+      color: var(--link);
+      text-underline-offset: 3px;
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 3px solid var(--accent-strong);
+      outline-offset: 3px;
+    }
+
+    .page {
+      width: min(100% - 32px, 760px);
+      margin: 0 auto;
+      padding: 22px 0 30px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 42px;
+      margin-bottom: 26px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 0.94rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      color: var(--text);
+    }
+
+    .edition-card,
+    .content-card {
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+    }
+
+    .edition-card {
+      padding: clamp(28px, 7vw, 60px) 22px;
+      text-align: center;
+    }
+
+    .edition-number {
+      margin: 0;
+      color: var(--accent-strong);
+      font-size: clamp(8rem, 34vw, 15rem);
+      font-weight: 800;
+      letter-spacing: -0.09em;
+      line-height: 0.83;
+      text-shadow: 0 8px 34px rgba(219, 164, 0, 0.19);
+    }
+
+    h1 {
+      margin: 23px 0 8px;
+      font-size: clamp(1.7rem, 6vw, 2.5rem);
+      letter-spacing: -0.045em;
+    }
+
+    .subtitle {
+      margin: 0 auto;
+      max-width: 34rem;
+      color: var(--muted);
+    }
+
+    .download-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 54px;
+      margin-top: 26px;
+      padding: 0 27px;
+      border: 0;
+      border-radius: 16px;
+      background: var(--accent);
+      color: var(--accent-text);
+      font: inherit;
+      font-size: 1.05rem;
+      font-weight: 750;
+      text-decoration: none;
+      box-shadow: 0 8px 22px rgba(166, 123, 0, 0.2);
+      transition: transform 150ms ease, filter 150ms ease;
+    }
+
+    .download-button:hover {
+      filter: brightness(1.04);
+      transform: translateY(-1px);
+    }
+
+    .download-button[hidden],
+    [hidden] {
+      display: none !important;
+    }
+
+    .loading {
+      margin: 22px 0 0;
+      color: var(--muted);
+    }
+
+    .inline-notice {
+      display: none;
+      margin: 22px auto 0;
+      max-width: 38rem;
+      padding: 14px 16px;
+      border: 1px solid var(--notice-border);
+      border-radius: 17px;
+      background: var(--notice-bg);
+      text-align: left;
+    }
+
+    .inline-notice.visible {
+      display: block;
+    }
+
+    .inline-notice strong {
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .content-card {
+      margin-top: 20px;
+      padding: 23px clamp(18px, 5vw, 30px);
+    }
+
+    .content-card h2 {
+      margin: 0 0 8px;
+      font-size: 1.22rem;
+      letter-spacing: -0.02em;
+    }
+
+    .content-card p {
+      margin: 8px 0;
+      color: var(--muted);
+    }
+
+    .requirements-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      margin-top: 8px;
+      padding: 0 16px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: var(--surface-solid);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .quick-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 17px;
+      margin: 12px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .quick-links a {
+      font-weight: 600;
+    }
+
+    .credits {
+      padding: 24px 12px 6px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      text-align: center;
+    }
+
+    .credits p {
+      margin: 5px 0;
+    }
+
+    .credits a {
+      color: inherit;
+    }
+
+    .copyright {
+      margin-top: 13px !important;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      z-index: 10;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: var(--backdrop);
+    }
+
+    .modal {
+      width: min(100%, 440px);
+      max-height: min(88vh, 700px);
+      overflow: auto;
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: var(--surface-solid);
+      box-shadow: 0 28px 90px rgba(0, 0, 0, 0.35);
+    }
+
+    .modal h2 {
+      margin: 0 0 8px;
+      font-size: 1.4rem;
+      letter-spacing: -0.03em;
+    }
+
+    .modal p {
+      margin: 8px 0;
+      color: var(--muted);
+    }
+
+    .modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .modal-button,
+    .modal-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 15px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .modal-link.primary {
+      border-color: transparent;
+      background: var(--accent);
+      color: var(--accent-text);
+    }
+
+    .error-title {
+      color: var(--danger);
+    }
+
+    @media (max-width: 480px) {
+      .page {
+        width: min(100% - 22px, 760px);
+        padding-top: 14px;
+      }
+
+      .edition-card {
+        border-radius: 23px;
+      }
+
+      .content-card {
+        border-radius: 21px;
+      }
+
+      .quick-links {
+        flex-direction: column;
+        gap: 9px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <nav class="topbar" aria-label="Page navigation">
+      <a class="back-link" href="https://skylark-inc.github.io">
+        <span aria-hidden="true">‹</span>
+        <span>Skylark</span>
+      </a>
+    </nav>
+
+    <section class="edition-card" aria-labelledby="page-title">
+      <p class="edition-number" aria-hidden="true">3</p>
+      <h1 id="page-title">Skylark (Edition 3)</h1>
+      <p class="subtitle">The third edition of Skylark.</p>
+
+      <a id="download-button" class="download-button" href="#" hidden>
+        Get Skylark
+      </a>
+
+      <p id="loading-message" class="loading" role="status">
+        Checking Edition 3 availability…
+      </p>
+
+      <div id="edition-notice" class="inline-notice" role="status"></div>
+    </section>
+
+    <section class="content-card" aria-labelledby="requirements-title">
+      <h2 id="requirements-title">Before you begin</h2>
+      <p>
+        Make sure your device meets Skylark’s requirements before installing.
+        You need access to Skylark servers, iCloud, and the Shortcuts permissions
+        required by your version of iOS or iPadOS.
+      </p>
+      <a
+        class="requirements-link"
+        href="https://skylark-inc.github.io/Requirements/"
+      >
+        View Skylark Requirements
+      </a>
+    </section>
+
+    <section class="content-card" aria-labelledby="quick-links-title">
+      <h2 id="quick-links-title">Quick Links</h2>
+      <ul class="quick-links">
+        <li><a href="https://skylark-inc.github.io/AL">Auto Launcher</a></li>
+        <li><a href="https://skylark-inc.github.io/FindEdition">Find Edition</a></li>
+        <li><a href="https://x.com/Skylrkedition3">@Skylrkedition3</a></li>
+        <li><a href="https://x.com/SkylarkSupport">Skylark Support</a></li>
+      </ul>
+    </section>
+
+    <footer class="credits">
+      <p>
+        <a href="https://x.com/UseSkylark">@UseSkylark</a>
+        ·
+        <a href="https://x.com/Terralinkslabs">@Terralinkslabs</a>
+      </p>
+      <p class="copyright">© Skylark <span id="copyright-year">2026</span></p>
+    </footer>
+  </main>
+
+  <div
+    id="modal-backdrop"
+    class="modal-backdrop"
+    role="presentation"
+    hidden
+  >
+    <section
+      id="modal"
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+      aria-describedby="modal-message"
+    >
+      <h2 id="modal-title"></h2>
+      <div id="modal-message"></div>
+      <div id="modal-actions" class="modal-actions"></div>
+    </section>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const EDITIONS_URL = "https://skylark-inc.github.io/editions.json";
+      const FIND_EDITION_URL = "https://skylark-inc.github.io/FindEdition";
+      const AUTO_LAUNCHER_URL = "https://skylark-inc.github.io/AL";
+      const REQUIREMENTS_URL = "https://skylark-inc.github.io/Requirements/";
+      const NONSERVER_URL = "https://skylark-inc.github.io/NonServer/";
+      const OBSOLETE_INFO_URL = "https://skylark-inc.github.io/Support/Obsolete/";
+      const SUPPORT_URL = "https://x.com/SkylarkSupport";
+
+      const downloadButton = document.getElementById("download-button");
+      const loadingMessage = document.getElementById("loading-message");
+      const notice = document.getElementById("edition-notice");
+      const backdrop = document.getElementById("modal-backdrop");
+      const modal = document.getElementById("modal");
+      const modalTitle = document.getElementById("modal-title");
+      const modalMessage = document.getElementById("modal-message");
+      const modalActions = document.getElementById("modal-actions");
+
+      document.querySelector(".requirements-link").href = REQUIREMENTS_URL;
+      document.getElementById("copyright-year").textContent =
+        String(Math.min(new Date().getFullYear(), 9999));
+
+      let modalIsLocked = false;
+      let lastFocusedElement = null;
+
+      function versionParts(value) {
+        if (value === null || value === undefined || value === "") return null;
+
+        const match = String(value).trim().match(/\d+(?:\.\d+)*/);
+        if (!match) return null;
+
+        return match[0].split(".").map(part => Number.parseInt(part, 10));
+      }
+
+      function compareVersions(left, right) {
+        const a = versionParts(left);
+        const b = versionParts(right);
+        if (!a || !b) return null;
+
+        const length = Math.max(a.length, b.length);
+        for (let i = 0; i < length; i += 1) {
+          const av = a[i] || 0;
+          const bv = b[i] || 0;
+          if (av > bv) return 1;
+          if (av < bv) return -1;
+        }
+        return 0;
+      }
+
+      function getEditionNumber(edition) {
+        const match = String(edition ?? "").match(/\d+/);
+        return match ? Number.parseInt(match[0], 10) : null;
+      }
+
+      function getEditionList(data) {
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data.editions)) return data.editions;
+        if (Array.isArray(data.releases)) return data.releases;
+        return null;
+      }
+
+      function isEditionThree(item) {
+        return getEditionNumber(item?.edition) === 3;
+      }
+
+      function getDeviceInfo() {
+        const ua = navigator.userAgent || "";
+        const isIPadDesktop =
+          /Macintosh|Mac OS X/i.test(ua) &&
+          navigator.maxTouchPoints > 1;
+        const isIOSDevice =
+          /iPhone|iPad|iPod/i.test(ua) || isIPadDesktop;
+
+        if (isIOSDevice) {
+          /*
+            Skylark release pages use the Safari Version/ value when present,
+            then fall back to the iOS/iPadOS OS token.
+          */
+          const safariVersion = ua.match(/\bVersion\/(\d+(?:\.\d+){1,2})/);
+          const osVersion = ua.match(/\bOS\s+(\d+(?:[._]\d+){0,2})/i);
+          const rawVersion = safariVersion
+            ? safariVersion[1]
+            : osVersion
+              ? osVersion[1].replace(/_/g, ".")
+              : null;
+
+          return {
+            kind: "apple-mobile",
+            version: rawVersion
+          };
+        }
+
+        const isRecognizedOther =
+          /Android|Windows NT|Windows Phone|CrOS|Linux|Macintosh|Mac OS X/i
+            .test(ua);
+
+        if (isRecognizedOther) {
+          return { kind: "recognized-unsupported", version: null };
+        }
+
+        return { kind: "unknown", version: null };
+      }
+
+      function showModal({ title, paragraphs, actions = [], locked = false, error = false }) {
+        lastFocusedElement = document.activeElement;
+        modalIsLocked = locked;
+
+        modalTitle.textContent = title;
+        modalTitle.classList.toggle("error-title", error);
+        modalMessage.replaceChildren();
+        modalActions.replaceChildren();
+
+        for (const text of paragraphs) {
+          const paragraph = document.createElement("p");
+          paragraph.textContent = text;
+          modalMessage.appendChild(paragraph);
+        }
+
+        for (const action of actions) {
+          if (action.type === "link") {
+            const link = document.createElement("a");
+            link.className = `modal-link${action.primary ? " primary" : ""}`;
+            link.href = action.href;
+            link.textContent = action.label;
+            if (action.external) {
+              link.target = "_blank";
+              link.rel = "noopener noreferrer";
+            }
+            modalActions.appendChild(link);
+          } else {
+            const button = document.createElement("button");
+            button.className = "modal-button";
+            button.type = "button";
+            button.textContent = action.label;
+            button.addEventListener("click", closeModal);
+            modalActions.appendChild(button);
+          }
+        }
+
+        backdrop.hidden = false;
+        const firstControl = modal.querySelector("a, button");
+        if (firstControl) firstControl.focus();
+      }
+
+      function closeModal() {
+        if (modalIsLocked) return;
+        backdrop.hidden = true;
+        if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+          lastFocusedElement.focus();
+        }
+      }
+
+      document.addEventListener("keydown", event => {
+        if (backdrop.hidden) return;
+
+        if (event.key === "Escape") {
+          if (modalIsLocked) {
+            event.preventDefault();
+            event.stopPropagation();
+          } else {
+            closeModal();
+          }
+        }
+
+        if (event.key === "Tab") {
+          const controls = [...modal.querySelectorAll("a, button")];
+          if (!controls.length) {
+            event.preventDefault();
+            return;
+          }
+
+          const first = controls[0];
+          const last = controls[controls.length - 1];
+
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        }
+      });
+
+      function showBlockedEdition() {
+        showModal({
+          title: "This edition is too new",
+          paragraphs: [
+            "Edition 3 is for supported iOS and iPadOS versions only. Find the edition that supports your device here."
+          ],
+          actions: [
+            {
+              type: "link",
+              label: "Find your supported edition here",
+              href: FIND_EDITION_URL,
+              primary: true
+            }
+          ],
+          locked: true
+        });
+      }
+
+      function showHardError(message) {
+        showModal({
+          title: "Skylark couldn’t check this device",
+          paragraphs: [
+            message,
+            "Please contact @SkylarkSupport for help."
+          ],
+          actions: [
+            {
+              type: "link",
+              label: "Contact @SkylarkSupport",
+              href: SUPPORT_URL,
+              primary: true,
+              external: true
+            }
+          ],
+          locked: true,
+          error: true
+        });
+      }
+
+      function showEOL() {
+        downloadButton.hidden = true;
+        loadingMessage.hidden = true;
+        notice.classList.add("visible");
+        notice.replaceChildren();
+
+        const title = document.createElement("strong");
+        title.textContent = "Edition 3 has reached End of Life";
+        const copy = document.createElement("span");
+        copy.textContent =
+          "This edition is no longer supported, and some features or services may no longer work.";
+        const links = document.createElement("p");
+        links.innerHTML =
+          '<a href="' + NONSERVER_URL + '">View available non-server editions</a>' +
+          ' · <a href="' + OBSOLETE_INFO_URL + '">More information</a>';
+
+        notice.append(title, copy, links);
+      }
+
+      function addNotice(title, message) {
+        notice.classList.add("visible");
+
+        const block = document.createElement("p");
+        const strong = document.createElement("strong");
+        strong.textContent = title;
+        const copy = document.createElement("span");
+        copy.textContent = message;
+        block.append(strong, copy);
+        notice.appendChild(block);
+      }
+
+      function handleEdition(data) {
+        const editions = getEditionList(data);
+        if (!editions) {
+          throw new Error("The editions.json file did not contain a valid editions list.");
+        }
+
+        const edition = editions.find(isEditionThree);
+        if (!edition) {
+          throw new Error("Edition 3 was not found in editions.json.");
+        }
+
+        /*
+          EOL takes priority over device checks, alerts, beta status, and links.
+        */
+        if (edition.eol === true) {
+          showEOL();
+          return;
+        }
+
+        const device = getDeviceInfo();
+
+        if (device.kind === "recognized-unsupported") {
+          showBlockedEdition();
+          return;
+        }
+
+        if (device.kind === "unknown") {
+          showHardError("Your device type was not recognized.");
+          return;
+        }
+
+        if (!device.version) {
+          showHardError("Your iOS or iPadOS version could not be recognized.");
+          return;
+        }
+
+        const minVersion = edition.min;
+        const maxVersion = edition.max;
+        const belowMinimum = compareVersions(device.version, minVersion) < 0;
+
+        if (belowMinimum) {
+          showBlockedEdition();
+          return;
+        }
+
+        if (edition.alert === true && edition.alertMessage) {
+          addNotice("Important notice", String(edition.alertMessage));
+        }
+
+        if (edition.beta === true) {
+          addNotice(
+            "Beta edition",
+            "This edition is under development and may contain bugs or incomplete features. Using the latest available iOS or iPadOS software beta is recommended."
+          );
+        }
+
+        if (maxVersion !== null && maxVersion !== undefined && maxVersion !== "") {
+          const aboveMaximum = compareVersions(device.version, maxVersion) > 0;
+          const sameMajor =
+            versionParts(device.version)?.[0] === versionParts(maxVersion)?.[0];
+
+          if (aboveMaximum && !sameMajor) {
+            showModal({
+              title: "A new edition is available",
+              paragraphs: [
+                "A newer edition is available for your version of iOS or iPadOS. Get it here."
+              ],
+              actions: [
+                {
+                  type: "link",
+                  label: "Get the edition for my version",
+                  href: https://skylark-inc.github.io/AL,
+                  primary: true
+                },
+                {
+                  type: "button",
+                  label: "Continue to Edition 3"
+                }
+              ],
+              locked: false
+            });
+          } else if (aboveMaximum) {
+            addNotice(
+              "Compatibility not confirmed",
+              "Your iOS or iPadOS version is newer than Edition 3’s confirmed maximum. You can continue, but compatibility has not been confirmed."
+            );
+          }
+        }
+
+        if (!edition.link) {
+          downloadButton.hidden = true;
+          loadingMessage.hidden = true;
+          addNotice(
+            "Download unavailable",
+            "A download is not currently available. Please try again later or contact Skylark Support."
+          );
+          return;
+        }
+
+        downloadButton.href = String(edition.link);
+        downloadButton.hidden = false;
+        loadingMessage.hidden = true;
+      }
+
+      async function loadEdition() {
+        try {
+          const response = await fetch(EDITIONS_URL, {
+            cache: "no-store",
+            headers: { "Accept": "application/json" }
+          });
+
+          if (!response.ok) {
+            throw new Error(`editions.json returned HTTP ${response.status}.`);
+          }
+
+          const data = await response.json();
+          handleEdition(data);
+        } catch (error) {
+          loadingMessage.hidden = true;
+          showHardError(
+            "Edition 3 information could not be loaded from editions.json. Please try again later."
+          );
+          console.error("Skylark Edition 3 page error:", error);
+        }
+      }
+
+      loadEdition();
+    })();
+  </script>
+</body>
+</html>
