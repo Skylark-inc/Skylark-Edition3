@@ -1,0 +1,966 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f5c943">
+  <title>Skylark — Edition 3</title>
+  <link rel="icon" href="web-icon">
+  <link rel="apple-touch-icon" href="web-icon">
+
+  <style>
+    :root {
+      color-scheme: light dark;
+      --page: #fff9e9;
+      --card: rgba(255, 255, 255, .88);
+      --card-solid: #fffefa;
+      --text: #211f18;
+      --muted: #716d60;
+      --yellow: #f5c943;
+      --yellow-strong: #dda900;
+      --yellow-ink: #211b08;
+      --border: rgba(54, 48, 26, .13);
+      --shadow: 0 14px 44px rgba(75, 60, 15, .11);
+      --link: #725500;
+      --notice: #fff3c7;
+      --notice-border: #e6c04d;
+      --error: #a43328;
+      --backdrop: rgba(24, 22, 17, .58);
+      --statusbar: #f5c943;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --page: #171610;
+        --card: rgba(40, 38, 29, .92);
+        --card-solid: #28261e;
+        --text: #f7f4e9;
+        --muted: #bdb8a6;
+        --yellow: #f1c43d;
+        --yellow-strong: #ffdb67;
+        --yellow-ink: #211b08;
+        --border: rgba(255, 245, 208, .14);
+        --shadow: 0 14px 44px rgba(0, 0, 0, .32);
+        --link: #ffdc70;
+        --notice: #39321b;
+        --notice-border: #8e741f;
+        --error: #ff9b8f;
+        --backdrop: rgba(0, 0, 0, .72);
+        --statusbar: #d9ad2e;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      min-height: 100%;
+      background: var(--page);
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 50% -12%, rgba(245, 201, 67, .19), transparent 55%),
+        var(--page);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "3";
+      position: fixed;
+      z-index: 0;
+      top: 48%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--yellow);
+      opacity: .12;
+      font-size: min(105vw, 74rem);
+      font-weight: 850;
+      letter-spacing: -.12em;
+      line-height: .8;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    a { color: var(--link); text-underline-offset: 3px; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    a:focus-visible, button:focus-visible {
+      outline: 3px solid var(--yellow-strong);
+      outline-offset: 3px;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
+    }
+
+    .hero-card {
+      position: relative;
+      isolation: isolate;
+      width: min(100%, 690px);
+      overflow: hidden;
+      padding: clamp(30px, 8vw, 62px) 24px clamp(26px, 7vw, 48px);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      -webkit-backdrop-filter: blur(22px);
+      backdrop-filter: blur(22px);
+      text-align: center;
+      cursor: pointer;
+      transition: transform .24s ease, box-shadow .24s ease;
+    }
+
+    .hero-card:hover { transform: translateY(-2px); }
+    .hero-card:active { transform: scale(.995); }
+
+    .topbar {
+      position: absolute;
+      z-index: 2;
+      top: 15px;
+      left: 18px;
+      right: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-align: left;
+    }
+
+    .back-link {
+      color: var(--muted);
+      font-size: .94rem;
+      font-weight: 650;
+      text-decoration: none;
+    }
+
+    .details-trigger, .sheet-close {
+      display: inline-grid;
+      width: 40px;
+      height: 40px;
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: var(--card-solid);
+      color: var(--text);
+      font: inherit;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    h1 {
+      margin: 22px 0 0;
+      font-size: clamp(2rem, 7vw, 3.1rem);
+      font-weight: 760;
+      letter-spacing: -.06em;
+      line-height: 1.08;
+      pointer-events: none;
+    }
+
+    .tagline, .edition-version, .supported-range, .loading {
+      position: relative;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .tagline {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: clamp(1.05rem, 4vw, 1.25rem);
+    }
+
+    .edition-version {
+      display: none;
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: .96rem;
+      font-weight: 600;
+    }
+
+    .supported-range {
+      display: none;
+      margin: 15px 0 0;
+      color: var(--muted);
+      font-size: .98rem;
+      font-weight: 600;
+    }
+
+    .download-button {
+      position: relative;
+      z-index: 2;
+      display: inline-flex;
+      min-height: 56px;
+      align-items: center;
+      justify-content: center;
+      margin-top: 25px;
+      padding: 0 30px;
+      border: 0;
+      border-radius: 17px;
+      background: var(--yellow);
+      color: var(--yellow-ink);
+      box-shadow: 0 8px 23px rgba(150, 112, 0, .18);
+      font: inherit;
+      font-size: 1.08rem;
+      font-weight: 750;
+      text-decoration: none;
+      transition: transform .15s ease, filter .15s ease;
+      cursor: pointer;
+    }
+
+    .download-button:hover { filter: brightness(1.04); transform: translateY(-1px); }
+    .loading { margin: 20px 0 0; color: var(--muted); }
+
+    .hero-notices {
+      position: relative;
+      z-index: 2;
+      width: min(100%, 560px);
+      margin: 20px auto 0;
+      text-align: left;
+      cursor: default;
+    }
+
+    .notice {
+      margin: 0 0 10px;
+      padding: 13px 15px;
+      border: 1px solid var(--notice-border);
+      border-radius: 16px;
+      background: var(--notice);
+      font-size: .94rem;
+    }
+
+    .notice:last-child { margin-bottom: 0; }
+    .notice strong { display: block; margin-bottom: 3px; }
+    .notice p { margin: 0; }
+
+    .newer-notice a { font-weight: 750; }
+
+    .sheet-backdrop, .modal-backdrop {
+      position: fixed;
+      z-index: 20;
+      inset: 0;
+      display: grid;
+      align-items: end;
+      justify-items: center;
+      padding: 18px 12px max(12px, env(safe-area-inset-bottom));
+      background: var(--backdrop);
+      opacity: 0;
+      transition: opacity .22s ease;
+    }
+
+    .sheet-backdrop.open, .modal-backdrop.open { opacity: 1; }
+
+    .details-sheet {
+      width: min(100%, 720px);
+      max-height: min(82svh, 760px);
+      overflow: auto;
+      overscroll-behavior: contain;
+      padding: 12px clamp(20px, 5vw, 32px) 24px;
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      background: var(--card-solid);
+      box-shadow: 0 28px 90px rgba(0, 0, 0, .34);
+      transform: translateY(26px);
+      transition: transform .24s cubic-bezier(.2, .75, .25, 1);
+      touch-action: pan-y;
+    }
+
+    .sheet-backdrop.open .details-sheet { transform: translateY(0); }
+
+    .sheet-head {
+      position: sticky;
+      z-index: 2;
+      top: -12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: -12px calc(clamp(20px, 5vw, 32px) * -1) 18px;
+      padding: 16px clamp(20px, 5vw, 32px) 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--card-solid);
+    }
+
+    .sheet-head h2 { margin: 0; font-size: 1.18rem; letter-spacing: -.03em; }
+    .sheet-close { font-size: 1.35rem; line-height: 1; }
+
+    .detail-section + .detail-section {
+      margin-top: 22px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .detail-section h3 {
+      margin: 0 0 8px;
+      font-size: 1.12rem;
+      letter-spacing: -.03em;
+    }
+
+    .detail-section p { margin: 7px 0; color: var(--muted); }
+    .requirements-list { margin: 10px 0 0; padding-left: 22px; color: var(--muted); }
+    .requirements-list li + li { margin-top: 9px; }
+
+    .join-link {
+      display: inline-flex;
+      min-height: 40px;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+      padding: 0 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--card);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .quick-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      margin: 10px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .quick-links a { font-weight: 650; }
+    .credits { padding-top: 22px; color: var(--muted); font-size: .9rem; text-align: center; }
+    .credits p { margin: 5px 0; }
+    .credits a { color: inherit; }
+
+    .modal-backdrop {
+      z-index: 40;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal {
+      width: min(100%, 460px);
+      max-height: min(86svh, 720px);
+      overflow: auto;
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 25px;
+      background: var(--card-solid);
+      box-shadow: 0 28px 90px rgba(0, 0, 0, .36);
+      transform: translateY(10px) scale(.985);
+      transition: transform .2s ease;
+    }
+
+    .modal-backdrop.open .modal { transform: translateY(0) scale(1); }
+    .modal h2 { margin: 0 0 8px; font-size: 1.4rem; letter-spacing: -.04em; }
+    .modal p { margin: 8px 0; color: var(--muted); }
+    .modal .error-title { color: var(--error); }
+
+    .modal-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 19px; }
+    .modal-button, .modal-link {
+      display: inline-flex;
+      min-height: 46px;
+      align-items: center;
+      justify-content: center;
+      padding: 0 15px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: var(--card);
+      color: var(--text);
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .modal-link.primary {
+      border-color: transparent;
+      background: var(--yellow);
+      color: var(--yellow-ink);
+    }
+
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+    }
+
+    [hidden] { display: none !important; }
+    body.overlay-open { overflow: hidden; }
+    body.overlay-open .page { pointer-events: none; user-select: none; }
+
+    @media (max-width: 480px) {
+      .hero-card { border-radius: 25px; }
+      .details-sheet { border-radius: 25px; }
+      .quick-links { flex-direction: column; gap: 9px; }
+      .modal-actions { flex-direction: column; }
+      .modal-button, .modal-link { width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page" id="page-content">
+    <article class="hero-card" id="hero-card" aria-label="Skylark Edition 3. Tap for requirements and links">
+      <div class="topbar">
+        <a class="back-link" href="https://skylark-inc.github.io">‹ Skylark</a>
+        <button class="details-trigger" id="details-trigger" type="button" aria-label="Open requirements and links" aria-controls="details-backdrop" aria-expanded="false">＋</button>
+      </div>
+
+      <h1>Skylark (Edition 3)</h1>
+      <p class="tagline">The third edition of Skylark.</p>
+      <p class="edition-version" id="edition-version"></p>
+      <p class="supported-range" id="supported-range"></p>
+
+      <div class="hero-notices" id="hero-notices" aria-live="polite"></div>
+
+      <a class="download-button" id="download-button" href="#" hidden>Get Skylark</a>
+      <p class="loading" id="loading-message" role="status">Checking Edition 3 availability…</p>
+    </article>
+  </main>
+
+  <div class="sheet-backdrop" id="details-backdrop" hidden>
+    <section class="details-sheet" id="details-sheet" role="dialog" aria-modal="true" aria-labelledby="details-title">
+      <header class="sheet-head" id="sheet-handle">
+        <h2 id="details-title">Requirements &amp; Links</h2>
+        <button class="sheet-close" id="sheet-close" type="button" aria-label="Close requirements and links">×</button>
+      </header>
+
+      <section class="detail-section" id="requirements">
+        <h3>Before you begin</h3>
+        <p>Complete these requirements before using Skylark:</p>
+        <ul class="requirements-list">
+          <li>
+            Skylark server access is required. Don’t have access yet?
+            Request access here.
+            <br><a class="join-link" href="https://skylark-inc.github.io/Join">Request access</a>
+          </li>
+          <li>
+            Enable the Shortcuts security and sharing permissions required by
+            your iOS or iPadOS version. Apple may change the names or locations
+            of these settings, so follow instructions for your version.
+          </li>
+          <li>iCloud must be enabled and available because Skylark uses iCloud-based features.</li>
+        </ul>
+      </section>
+
+      <section class="detail-section" aria-labelledby="quick-links-title">
+        <h3 id="quick-links-title">Quick Links</h3>
+        <ul class="quick-links">
+          <li><a href="#requirements" id="requirements-link">Requirements</a></li>
+          <li><a href="https://skylark-inc.github.io/FindEdition">Find Edition</a></li>
+          <li><a href="https://x.com/Skylrkedition3">@Skylrkedition3</a></li>
+          <li><a href="https://x.com/SkylarkSupport">@SkylarkSupport</a></li>
+        </ul>
+      </section>
+
+      <footer class="credits">
+        <p><a href="https://x.com/UseSkylark">@UseSkylark</a> · <a href="https://x.com/Terralinkslabs">@Terralinkslabs</a></p>
+        <p>©️Skylark <span id="copyright-year">2026</span></p>
+      </footer>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="modal-backdrop" hidden>
+    <section class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message">
+      <h2 id="modal-title"></h2>
+      <div id="modal-message"></div>
+      <div class="modal-actions" id="modal-actions"></div>
+    </section>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const EDITIONS_URL = "https://skylark-inc.github.io/editions.json";
+      const FIND_EDITION_URL = "https://skylark-inc.github.io/FindEdition";
+      const AUTO_LAUNCHER_URL = "https://skylark-inc.github.io/AL";
+      const NONSERVER_URL = "https://skylark-inc.github.io/NonServer/";
+      const OBSOLETE_INFO_URL = "https://skylark-inc.github.io/Support/Obsolete/";
+      const SUPPORT_URL = "https://x.com/SkylarkSupport";
+      const REQUEST_TIMEOUT_MS = 12000;
+
+      const pageContent = document.getElementById("page-content");
+      const heroCard = document.getElementById("hero-card");
+      const detailsTrigger = document.getElementById("details-trigger");
+      const detailsBackdrop = document.getElementById("details-backdrop");
+      const detailsSheet = document.getElementById("details-sheet");
+      const sheetClose = document.getElementById("sheet-close");
+      const modalBackdrop = document.getElementById("modal-backdrop");
+      const modal = document.getElementById("modal");
+      const modalTitle = document.getElementById("modal-title");
+      const modalMessage = document.getElementById("modal-message");
+      const modalActions = document.getElementById("modal-actions");
+      const loadingMessage = document.getElementById("loading-message");
+      const downloadButton = document.getElementById("download-button");
+      const heroNotices = document.getElementById("hero-notices");
+      const editionVersion = document.getElementById("edition-version");
+      const supportedRange = document.getElementById("supported-range");
+
+      document.getElementById("copyright-year").textContent =
+        String(Math.min(new Date().getFullYear(), 9999));
+
+      let modalLocked = false;
+      let previousFocus = null;
+      let overlayScrollY = 0;
+      let sheetTouchStartY = null;
+
+      function lockBackground() {
+        overlayScrollY = window.scrollY || 0;
+        document.body.classList.add("overlay-open");
+        pageContent.setAttribute("inert", "");
+        pageContent.setAttribute("aria-hidden", "true");
+        document.body.style.position = "fixed";
+        document.body.style.top = `-${overlayScrollY}px`;
+        document.body.style.width = "100%";
+      }
+
+      function unlockBackground() {
+        document.body.classList.remove("overlay-open");
+        pageContent.removeAttribute("inert");
+        pageContent.removeAttribute("aria-hidden");
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        window.scrollTo(0, overlayScrollY);
+      }
+
+      function versionParts(value) {
+        if (value === null || value === undefined || value === "") return null;
+        const match = String(value).trim().match(/\d+(?:\.\d+)*/);
+        return match ? match[0].split(".").map(part => Number.parseInt(part, 10)) : null;
+      }
+
+      function compareVersions(left, right) {
+        const a = versionParts(left);
+        const b = versionParts(right);
+        if (!a || !b) return null;
+        for (let i = 0; i < Math.max(a.length, b.length); i++) {
+          const av = a[i] || 0;
+          const bv = b[i] || 0;
+          if (av > bv) return 1;
+          if (av < bv) return -1;
+        }
+        return 0;
+      }
+
+      function getEditionNumber(value) {
+        const match = String(value ?? "").match(/\d+/);
+        return match ? Number.parseInt(match[0], 10) : null;
+      }
+
+      function getEditionEntries(data) {
+        const collections = [data?.editions, data?.releases, data];
+        for (const collection of collections) {
+          if (Array.isArray(collection)) return collection;
+          if (collection && typeof collection === "object") {
+            const entries = Object.entries(collection)
+              .filter(([, value]) => value && typeof value === "object" && !Array.isArray(value))
+              .filter(([, value]) => "edition" in value || "min" in value || "link" in value)
+              .map(([key, value]) => ({ ...value, edition: value.edition ?? key }));
+            if (entries.length) return entries;
+          }
+        }
+        return null;
+      }
+
+      function getDeviceInfo() {
+        const ua = navigator.userAgent || "";
+        const ipadDesktopUA = /Macintosh|Mac OS X/i.test(ua) && navigator.maxTouchPoints > 1;
+        const isAppleMobile = /iPhone|iPad|iPod/i.test(ua) || ipadDesktopUA;
+
+        if (isAppleMobile) {
+          // Use the version embedded in Version/<version> Mobile/ as requested.
+          const exact = ua.match(/\bVersion\/(\d+(?:\.\d+){1,2})\s+Mobile\//);
+          const fallback = ua.match(/\bVersion\/(\d+(?:\.\d+){1,2})/);
+          return { kind: "apple-mobile", version: exact?.[1] || fallback?.[1] || null };
+        }
+
+        if (/Android|Windows NT|Windows Phone|CrOS|Linux|Macintosh|Mac OS X/i.test(ua)) {
+          return { kind: "recognized-unsupported", version: null };
+        }
+        return { kind: "unknown", version: null };
+      }
+
+      function addModalAction({ label, href, primary = false, onClick }) {
+        if (href) {
+          const link = document.createElement("a");
+          link.className = `modal-link${primary ? " primary" : ""}`;
+          link.href = href;
+          link.textContent = label;
+          if (onClick) link.addEventListener("click", onClick);
+          modalActions.appendChild(link);
+        } else {
+          const button = document.createElement("button");
+          button.className = "modal-button";
+          button.type = "button";
+          button.textContent = label;
+          button.addEventListener("click", onClick || closeModal);
+          modalActions.appendChild(button);
+        }
+      }
+
+      function showModal({ title, paragraphs = [], actions = [], locked = false, error = false }) {
+        previousFocus = document.activeElement;
+        modalLocked = locked;
+        modalTitle.textContent = title;
+        modalTitle.classList.toggle("error-title", error);
+        modalMessage.replaceChildren();
+        modalActions.replaceChildren();
+        paragraphs.forEach(text => {
+          const p = document.createElement("p");
+          p.textContent = text;
+          modalMessage.appendChild(p);
+        });
+        actions.forEach(addModalAction);
+
+        lockBackground();
+        modalBackdrop.hidden = false;
+        requestAnimationFrame(() => modalBackdrop.classList.add("open"));
+        modal.querySelector("a, button")?.focus();
+      }
+
+      function closeModal() {
+        if (modalLocked) return;
+        modalBackdrop.classList.remove("open");
+        setTimeout(() => {
+          modalBackdrop.hidden = true;
+          unlockBackground();
+          previousFocus?.focus?.();
+        }, 210);
+      }
+
+      function openDetails() {
+        if (!detailsBackdrop.hidden || !modalBackdrop.hidden) return;
+        previousFocus = document.activeElement;
+        detailsTrigger.setAttribute("aria-expanded", "true");
+        lockBackground();
+        detailsBackdrop.hidden = false;
+        requestAnimationFrame(() => detailsBackdrop.classList.add("open"));
+        sheetClose.focus();
+      }
+
+      function closeDetails() {
+        if (detailsBackdrop.hidden) return;
+        detailsBackdrop.classList.remove("open");
+        detailsTrigger.setAttribute("aria-expanded", "false");
+      setTimeout(() => {
+        detailsBackdrop.hidden = true;
+        unlockBackground();
+        detailsTrigger.focus();
+      }, 240);
+      }
+
+      detailsTrigger.addEventListener("click", event => {
+        event.stopPropagation();
+        openDetails();
+      });
+      heroCard.addEventListener("click", event => {
+        if (event.target.closest("a, button, .hero-notices")) return;
+        openDetails();
+      });
+      heroCard.addEventListener("keydown", event => {
+        if ((event.key === "Enter" || event.key === " ") &&
+            !event.target.closest("a, button")) {
+          event.preventDefault();
+          openDetails();
+        }
+      });
+      sheetClose.addEventListener("click", closeDetails);
+      detailsBackdrop.addEventListener("click", event => {
+        if (event.target === detailsBackdrop) closeDetails();
+      });
+      document.getElementById("requirements-link").addEventListener("click", event => {
+        event.preventDefault();
+        document.getElementById("requirements").scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+
+      detailsSheet.addEventListener("touchstart", event => {
+        sheetTouchStartY = event.changedTouches[0]?.clientY ?? null;
+      }, { passive: true });
+      detailsSheet.addEventListener("touchend", event => {
+        if (sheetTouchStartY === null) return;
+        const endY = event.changedTouches[0]?.clientY;
+        if (typeof endY === "number" && endY - sheetTouchStartY > 100 && detailsSheet.scrollTop <= 0) {
+          closeDetails();
+        }
+        sheetTouchStartY = null;
+      }, { passive: true });
+
+      document.addEventListener("keydown", event => {
+        const activeOverlay = !modalBackdrop.hidden ? modal : !detailsBackdrop.hidden ? detailsSheet : null;
+        if (!activeOverlay) return;
+
+        if (event.key === "Escape") {
+          if (!modalBackdrop.hidden) {
+            if (!modalLocked) closeModal();
+          } else {
+            closeDetails();
+          }
+          event.preventDefault();
+          return;
+        }
+
+        if (event.key === "Tab") {
+          const controls = [...activeOverlay.querySelectorAll("a[href], button:not([disabled])")];
+          if (!controls.length) {
+            event.preventDefault();
+            return;
+          }
+          const first = controls[0];
+          const last = controls[controls.length - 1];
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        }
+      });
+
+      function addNotice(title, message, className = "") {
+        const box = document.createElement("div");
+        box.className = `notice ${className}`.trim();
+        const strong = document.createElement("strong");
+        strong.textContent = title;
+        const p = document.createElement("p");
+        p.textContent = message;
+        box.append(strong, p);
+        heroNotices.appendChild(box);
+        return box;
+      }
+
+      function addNewerEditionBanner(storageKey) {
+        const box = addNotice(
+          "A newer edition is available",
+          "There’s a newer edition of Skylark for your iOS or iPadOS version."
+        , "newer-notice");
+        const p = box.querySelector("p");
+        p.append(document.createTextNode(" "));
+        const link = document.createElement("a");
+        link.href = AUTO_LAUNCHER_URL;
+        link.textContent = "Get newer edition";
+        link.addEventListener("click", () => storageSet(storageKey, "dismissed"));
+        p.appendChild(link);
+      }
+
+      function storageGet(key) {
+        try { return localStorage.getItem(key); } catch { return null; }
+      }
+
+      function storageSet(key, value) {
+        try { localStorage.setItem(key, value); } catch { /* Session still continues. */ }
+      }
+
+      function showUnsupportedPopup() {
+        loadingMessage.hidden = true;
+        showModal({
+          title: "This edition isn’t compatible with your device",
+          paragraphs: ["Find the Skylark edition for your device."],
+          actions: [{ label: "Find Edition", href: FIND_EDITION_URL, primary: true }],
+          locked: true
+        });
+      }
+
+      function showHardError(message) {
+        loadingMessage.hidden = true;
+        downloadButton.hidden = true;
+        showModal({
+          title: "Skylark couldn’t check this device",
+          paragraphs: [message, "Contact @SkylarkSupport for help."],
+          actions: [{ label: "Contact @SkylarkSupport", href: SUPPORT_URL, primary: true }],
+          locked: true,
+          error: true
+        });
+      }
+
+      function showEOL() {
+        loadingMessage.hidden = true;
+        downloadButton.hidden = true;
+        addNotice(
+          "Edition 3 has reached End of Life",
+          "This edition is no longer supported, and some features or services may no longer work."
+        );
+        const box = heroNotices.lastElementChild;
+        const p = box.querySelector("p");
+        p.append(document.createTextNode(" "));
+        const link = document.createElement("a");
+        link.href = NONSERVER_URL;
+        link.textContent = "View non-server editions";
+        p.appendChild(link);
+        p.append(document.createTextNode(" · "));
+        const info = document.createElement("a");
+        info.href = OBSOLETE_INFO_URL;
+        info.textContent = "More information";
+        p.appendChild(info);
+      }
+
+      function setEditionMetadata(edition) {
+        if (edition.version !== null && edition.version !== undefined && edition.version !== "") {
+          editionVersion.textContent = `Version ${edition.version}`;
+          editionVersion.style.display = "block";
+        }
+
+        if (edition.min !== null && edition.min !== undefined && edition.min !== "") {
+          const hasMax = edition.max !== null && edition.max !== undefined && edition.max !== "";
+          supportedRange.textContent = hasMax
+            ? `iOS and iPadOS ${edition.min} – ${edition.max}`
+            : `iOS and iPadOS ${edition.min} and later`;
+          supportedRange.style.display = "block";
+        }
+      }
+
+      function showNewerEditionPopup(storageKey) {
+        showModal({
+          title: "A newer edition is available",
+          paragraphs: ["There’s a newer edition of Skylark for your iOS or iPadOS version. You can switch now or continue with Edition 3."],
+          actions: [
+            {
+              label: "Get newer edition",
+              href: AUTO_LAUNCHER_URL,
+              primary: true,
+              onClick: () => storageSet(storageKey, "dismissed")
+            },
+            {
+              label: "Continue with Edition 3",
+              onClick: () => {
+                storageSet(storageKey, "dismissed");
+                closeModal();
+                addNewerEditionBanner(storageKey);
+              }
+            }
+          ],
+          locked: false
+        });
+      }
+
+      function displayEdition(edition) {
+        const device = getDeviceInfo();
+        if (device.kind === "unknown") throw new Error("Your device type was not recognized.");
+        if (device.kind === "apple-mobile" && !device.version) {
+          throw new Error("The browser version could not be read from Version/... Mobile/....");
+        }
+
+        setEditionMetadata(edition);
+
+        if (edition.min === null || edition.min === undefined || edition.min === "") {
+          throw new Error("Edition 3 is missing its minimum supported version.");
+        }
+
+        const hasMax = edition.max !== null && edition.max !== undefined && edition.max !== "";
+
+          // EOL has already been checked. Keep data-driven alert and beta notices visible.
+        if (edition.alert === true && edition.alertMessage) {
+          addNotice("Important notice", String(edition.alertMessage));
+        }
+        if (edition.beta === true) {
+          addNotice(
+            "Beta edition",
+            "This edition is under development and may contain bugs or incomplete features. Using the latest available iOS or iPadOS software beta is recommended."
+          );
+        }
+
+        if (device.kind === "recognized-unsupported") {
+          showUnsupportedPopup();
+          return;
+        }
+
+        if (compareVersions(device.version, edition.min) < 0) {
+          showUnsupportedPopup();
+          return;
+        }
+
+        if (hasMax) {
+          const aboveMax = compareVersions(device.version, edition.max) > 0;
+          const currentMajor = versionParts(device.version)?.[0];
+          const maxMajor = versionParts(edition.max)?.[0];
+          if (aboveMax && currentMajor !== maxMajor) {
+            const storageKey = `skylark-edition3-newer-${edition.version ?? "unknown"}-${currentMajor}`;
+            if (storageGet(storageKey) === "dismissed") {
+              addNewerEditionBanner(storageKey);
+            } else {
+              showNewerEditionPopup(storageKey);
+            }
+          } else if (aboveMax) {
+            addNotice(
+              "Compatibility not confirmed",
+              "Your iOS or iPadOS version is newer than Edition 3’s confirmed maximum. You can continue, but compatibility has not been confirmed."
+            );
+          }
+        }
+
+        if (!edition.link) {
+          loadingMessage.hidden = true;
+          addNotice(
+            "Download unavailable",
+            "A download is not currently available. Please try again later or contact Skylark Support."
+          );
+          return;
+        }
+
+        downloadButton.href = String(edition.link);
+        downloadButton.hidden = false;
+        loadingMessage.hidden = true;
+      }
+
+      function findEdition(data) {
+        const entries = getEditionEntries(data);
+        if (!entries) throw new Error("editions.json did not contain a valid edition list.");
+        const edition = entries.find(item => getEditionNumber(item?.edition) === 3);
+        if (!edition) throw new Error("Edition 3 was not found in editions.json.");
+        return edition;
+      }
+
+      async function loadEdition() {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 12000);
+        try {
+          const response = await fetch(EDITIONS_URL, {
+            cache: "no-store",
+            headers: { Accept: "application/json" },
+            signal: controller.signal
+          });
+          if (!response.ok) throw new Error(`editions.json returned HTTP ${response.status}.`);
+          const data = await response.json();
+          const edition = findEdition(data);
+
+          // EOL overrides alerts, beta, device status, and download availability.
+          if (edition.eol === true) {
+            setEditionMetadata(edition);
+            showEOL();
+            return;
+          }
+
+          displayEdition(edition);
+        } catch (error) {
+          const message = error?.name === "AbortError"
+            ? "The Edition 3 check timed out while loading editions.json."
+            : "Edition 3 information could not be loaded from editions.json.";
+          showHardError(message);
+          console.error("Skylark Edition 3 page error:", error);
+        } finally {
+          clearTimeout(timeout);
+        }
+      }
+
+      loadEdition();
+    })();
+  </script>
+</body>
+</html>
