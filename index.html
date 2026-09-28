@@ -415,7 +415,7 @@
 
 <body>
   <main class="page" id="page-content">
-    <article class="hero-card" id="hero-card" aria-label="Skylark Edition 3. Tap for requirements and links">
+    <article class="hero-card" id="hero-card" tabindex="0" aria-label="Skylark Edition 3. Open for requirements and links">
       <div class="topbar">
         <a class="back-link" href="https://skylark-inc.github.io">‹ Skylark</a>
         <button class="details-trigger" id="details-trigger" type="button" aria-label="Open requirements and links" aria-controls="details-backdrop" aria-expanded="false">＋</button>
@@ -445,8 +445,8 @@
         <p>Complete these requirements before using Skylark:</p>
         <ul class="requirements-list">
           <li>
-            Skylark server access is required. Don’t have access yet?
-            Request access here.
+            Server access is required to use Skylark. If you don’t have access,
+            request it here.
             <br><a class="join-link" href="https://skylark-inc.github.io/Join">Request access</a>
           </li>
           <li>
@@ -461,7 +461,6 @@
       <section class="detail-section" aria-labelledby="quick-links-title">
         <h3 id="quick-links-title">Quick Links</h3>
         <ul class="quick-links">
-          <li><a href="https://skylark-inc.github.io/">Home Page</a></li>
           <li><a href="https://skylark-inc.github.io/FindEdition">Find Edition</a></li>
           <li><a href="https://x.com/Skylrkedition3">@Skylrkedition3</a></li>
           <li><a href="https://x.com/SkylarkSupport">@SkylarkSupport</a></li>
@@ -489,7 +488,6 @@
 
       const EDITIONS_URL = "https://skylark-inc.github.io/editions.json";
       const FIND_EDITION_URL = "https://skylark-inc.github.io/FindEdition";
-      const AUTO_LAUNCHER_URL = "https://skylark-inc.github.io/AL";
       const NONSERVER_URL = "https://skylark-inc.github.io/NonServer/";
       const OBSOLETE_INFO_URL = "https://skylark-inc.github.io/Support/Obsolete/";
       const SUPPORT_URL = "https://x.com/SkylarkSupport";
@@ -685,9 +683,10 @@
       detailsBackdrop.addEventListener("click", event => {
         if (event.target === detailsBackdrop) closeDetails();
       });
-      document.getElementById("requirements-link").addEventListener("click", event => {
+      // Optional: older copies may still include this in-page shortcut.
+      document.getElementById("requirements-link")?.addEventListener("click", event => {
         event.preventDefault();
-        document.getElementById("requirements").scrollIntoView({ behavior: "smooth", block: "start" });
+        document.getElementById("requirements")?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
 
       detailsSheet.addEventListener("touchstart", event => {
@@ -746,16 +745,17 @@
         return box;
       }
 
-      function addNewerEditionBanner(storageKey) {
+      function addNewerEditionBanner(storageKey, destination, editionLabel) {
         const box = addNotice(
           "A newer edition is available",
-          "There’s a newer edition of Skylark for your iOS or iPadOS version."
-        , "newer-notice");
+          `${editionLabel} supports your iOS or iPadOS version.`,
+          "newer-notice"
+        );
         const p = box.querySelector("p");
         p.append(document.createTextNode(" "));
         const link = document.createElement("a");
-        link.href = AUTO_LAUNCHER_URL;
-        link.textContent = "Get newer edition";
+        link.href = destination;
+        link.textContent = "Get it here";
         link.addEventListener("click", () => storageSet(storageKey, "dismissed"));
         p.appendChild(link);
       }
@@ -826,14 +826,14 @@
         }
       }
 
-      function showNewerEditionPopup(storageKey) {
+      function showNewerEditionPopup(storageKey, destination, editionLabel) {
         showModal({
           title: "A newer edition is available",
-          paragraphs: ["There’s a newer edition of Skylark for your iOS or iPadOS version. You can switch now or continue with Edition 3."],
+          paragraphs: [`${editionLabel} supports your iOS or iPadOS version.`],
           actions: [
             {
-              label: "Get newer edition",
-              href: AUTO_LAUNCHER_URL,
+              label: "Get it here",
+              href: destination,
               primary: true,
               onClick: () => storageSet(storageKey, "dismissed")
             },
@@ -842,7 +842,7 @@
               onClick: () => {
                 storageSet(storageKey, "dismissed");
                 closeModal();
-                addNewerEditionBanner(storageKey);
+                addNewerEditionBanner(storageKey, destination, editionLabel);
               }
             }
           ],
@@ -850,7 +850,25 @@
         });
       }
 
-      function displayEdition(edition) {
+      function getEditionRoute(edition) {
+        const releasePage = typeof edition?.releasePage === "string" ? edition.releasePage.trim() : "";
+        return releasePage || FIND_EDITION_URL;
+      }
+
+      function findCompatibleNewerEdition(entries, deviceVersion) {
+        return entries
+          .filter(item => getEditionNumber(item?.edition) > 3 && item?.eol !== true)
+          .filter(item => {
+            const aboveMinimum = compareVersions(deviceVersion, item?.min);
+            const belowMaximum = item?.max === null || item?.max === undefined || item?.max === ""
+              ? 1
+              : compareVersions(deviceVersion, item.max);
+            return aboveMinimum !== null && aboveMinimum >= 0 && belowMaximum !== null && belowMaximum <= 0;
+          })
+          .sort((a, b) => (versionParts(b.min)?.[0] ?? 0) - (versionParts(a.min)?.[0] ?? 0))[0] || null;
+      }
+
+      function displayEdition(edition, entries) {
         const device = getDeviceInfo();
         if (device.kind === "unknown") throw new Error("Your device type was not recognized.");
         if (device.kind === "apple-mobile" && !device.version) {
@@ -891,11 +909,14 @@
           const currentMajor = versionParts(device.version)?.[0];
           const maxMajor = versionParts(edition.max)?.[0];
           if (aboveMax && currentMajor !== maxMajor) {
+            const newerEdition = findCompatibleNewerEdition(entries, device.version);
+            const destination = newerEdition ? getEditionRoute(newerEdition) : FIND_EDITION_URL;
+            const editionLabel = newerEdition ? `Edition ${getEditionNumber(newerEdition.edition)}` : "Another Skylark edition";
             const storageKey = `skylark-edition3-newer-${edition.version ?? "unknown"}-${currentMajor}`;
             if (storageGet(storageKey) === "dismissed") {
-              addNewerEditionBanner(storageKey);
+              addNewerEditionBanner(storageKey, destination, editionLabel);
             } else {
-              showNewerEditionPopup(storageKey);
+              showNewerEditionPopup(storageKey, destination, editionLabel);
             }
           } else if (aboveMax) {
             addNotice(
@@ -929,7 +950,7 @@
 
       async function loadEdition() {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 12000);
+        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
         try {
           const response = await fetch(EDITIONS_URL, {
             cache: "no-store",
@@ -939,6 +960,7 @@
           if (!response.ok) throw new Error(`editions.json returned HTTP ${response.status}.`);
           const data = await response.json();
           const edition = findEdition(data);
+          const entries = getEditionEntries(data);
 
           // EOL overrides alerts, beta, device status, and download availability.
           if (edition.eol === true) {
@@ -947,7 +969,7 @@
             return;
           }
 
-          displayEdition(edition);
+          displayEdition(edition, entries);
         } catch (error) {
           const message = error?.name === "AbortError"
             ? "The Edition 3 check timed out while loading editions.json."
